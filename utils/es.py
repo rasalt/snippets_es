@@ -14,9 +14,68 @@ default_query_expansion_condition = 1
 def es_raw_search_result(result):
     for i in result:
         print("-"*79)
-        #print(i.getId())
         print(i)
         print("-"*79)
+
+from google.cloud import discoveryengine_v1beta
+def converse_conversation(formatted_parent_conversation, userquery):
+    
+    print("Formatted parent conversation string: {}".format(formatted_parent_conversation))
+    conversational_search_service_client = discoveryengine_v1beta.ConversationalSearchServiceClient()
+    if 1:
+        query = discoveryengine_v1beta.TextInput(input = userquery)
+        request = discoveryengine_v1beta.ConverseConversationRequest(
+                name = formatted_parent_conversation,
+                query = query
+        )
+    else:        
+        request = {}
+        request['query'] = query
+        request['name'] = formatted_parent_conversation
+
+     # Call the API and handle any network failures.
+    try:
+        response = conversational_search_service_client.converse_conversation(request)
+        print(f'Response data: {response}')
+    except Exception as ex:
+        print(f'Call failed with message: {str(ex)}')
+
+    return response
+
+def create_conversation(PROJECT, LOCATION, DATA_STORE):
+    from google.cloud import discoveryengine_v1beta
+    # Get the list of methods
+    if 0:
+        methods = dir(discoveryengine_v1beta.ConversationalSearchServiceClient)
+    # Print the methods
+        for method in methods:
+            print(method)
+  
+    formatted_parent = discoveryengine_v1beta.ConversationalSearchServiceClient.data_store_path(
+       PROJECT,
+       LOCATION,
+       DATA_STORE
+    )
+    # Create a client.
+    conversational_search_service_client =    discoveryengine_v1beta.ConversationalSearchServiceClient()
+
+    # Prepare the request message.
+    conversation = discoveryengine_v1beta.Conversation()
+    if 1:
+        request = discoveryengine_v1beta.CreateConversationRequest(
+            parent = formatted_parent,
+            conversation = conversation
+        )
+    # Call the API and handle any network failures.
+    try:
+        response = conversational_search_service_client.create_conversation(request)
+        print(f'Response data: {response}')
+    except Exception as ex:
+        print(f'Call failed with message: {str(ex)}')
+
+    formatted_parent_conversation = response.name
+    print("Formatted convo name is: {}".format(formatted_parent_conversation))
+    return formatted_parent_conversation
 
 def es_raw_search_summary(project,
               search_engine,
@@ -57,7 +116,7 @@ def es_raw_search_summary(project,
     query_expansion_spec = {
             "condition": default_query_expansion_condition
     }
-    print("Filter is :{}".format(filtername))
+    #print("Filter is :{}".format(filtername))
     request = discoveryengine_v1beta.SearchRequest(
             query=query,
             filter=filtername,
@@ -67,9 +126,5 @@ def es_raw_search_summary(project,
             query_expansion_spec=query_expansion_spec,
         )
 
-    #request = discoveryengine_v1beta.SearchRequest(serving_config=serving_config, query=query)
     result = search_client.search(request)
-    #es_raw_search_result(result)
-    #print(result)
     return result.summary.summary_text, result
-
